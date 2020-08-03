@@ -125,7 +125,7 @@ class Relation:
         instance = self.model.from_req(req)
         self.model = instance  # This is probably a bad idea... but for now idc since this is all pretty rough
 
-    def find_all(self, db: sqlite3.Connection, req: falcon.Request, id: str):
+    def find_all(self, db: sqlite3.Connection, req: falcon.Request, column: str, id: str):
         c = db.cursor()
         this_id = self.this.table_name + "_id"
         that_id = self.that.table_name + "_id"
@@ -136,7 +136,7 @@ class Relation:
         sql = f"""SELECT {','.join(qualified_fields)} FROM {self.map_table_name}
         JOIN {self.this.table_name} ON {self.this.table_name}.id = {self.model.table_name}.{this_id}
         JOIN {self.that.table_name} ON {self.that.table_name}.id = {self.model.table_name}.{that_id}
-        WHERE {self.model.table_name}.{this_id}=? AND ({self.model.table_name}.is_public = 1 
+        WHERE {self.model.table_name}.{column}=? AND ({self.model.table_name}.is_public = 1 
         OR ({self.this.table_name}.creator_id = ? AND {self.that.table_name}.creator_id = ?))"""
         rows = c.execute(sql, (id, user, user)).fetchall()
         return rows

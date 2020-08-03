@@ -18,8 +18,11 @@ class Factions(Resource):
         """ Retrieve a list of all factions """
         c = self._db.cursor()
         rows = c.execute("""
-        SELECT [id], [name], [description], [is_public] FROM faction
-        WHERE campaign_id = ? AND (is_public = 1 OR creator_id = ?)
+        SELECT id, name, description, is_public, count(DISTINCT character_id) FROM (
+            SELECT [id], [name], [description], [faction].[is_public], character_id FROM faction
+            left outer JOIN character_faction cf on faction.id = cf.faction_id and cf.is_public = 1
+            WHERE campaign_id = ? AND (faction.is_public = 1 OR faction.creator_id = ?)
+        ) GROUP BY id, name, description, is_public;
         """, (req.context["user"]["campaign"], req.context["user"]["id"]))
         factions = []
         for row in rows:
@@ -27,7 +30,8 @@ class Factions(Resource):
                 "id": row[0],
                 "name": row[1],
                 "description": row[2],
-                "is_public": row[3]
+                "is_public": row[3],
+                "num_members": row[4]
             })
         res.media = factions
 

@@ -7,7 +7,7 @@ from .places import Places, Place
 from .things import Things, Thing
 from .chronicle import ChronicleEntries, ChronicleEntry
 from .utils import JWT_KEY
-from .relationships import CharacterRelations, CharacterRelation
+from .relationships import CharacterRelations, CharacterRelation, FactionRelations
 from falcon_auth import FalconAuthMiddleware, JWTAuthBackend
 
 
@@ -40,6 +40,7 @@ class API(falcon.API):
         entry_resource = ChronicleEntry(sql_conn, data_path)
         char_rels_resource = CharacterRelations(sql_conn, data_path)
         char_rel_resource = CharacterRelation(sql_conn, data_path)
+        faction_rels_resource = FactionRelations(sql_conn, data_path)
         self.add_route("/users/", users_resource)
         self.add_route("/login", auth_resource)
         self.add_route("/profile", profile_resource)
@@ -58,3 +59,5 @@ class API(falcon.API):
         self.add_route("/chronicle/{entry_id}", entry_resource)
         self.add_route("/characters/{character_id}/relations/{relation_type}", char_rels_resource)
         self.add_route("/characters/{character_id}/relations/{relation_type}/{relation_id}", char_rel_resource)
+        self.add_route("/factions/{faction_id}/relations/{relation_type}", faction_rels_resource)
+        self.add_route("/{relation_type}/{relation_id}/relations/characters/{character_id}", char_rel_resource)
