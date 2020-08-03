@@ -37,7 +37,7 @@ class Thing(Resource):
         """.format(",".join(f"[{field}]" for field in ThingModel.fields)),
                         (thing_id, req.context['user']['id'])).fetchone()
         if not row:
-            raise falcon.HTTPNotFound("No thing found with id {} or unauthorized".format(thing_id))
+            raise falcon.HTTPNotFound(title="No thing found with id {} or unauthorized".format(thing_id))
         thing = ThingModel.from_db(row)
         if thing.external_file_name:
             with open(os.path.join(self._path, thing.external_file_name)) as f:

@@ -47,7 +47,7 @@ class Faction(Resource):
         WHERE id=? AND (creator_id=? OR is_public=1)
         """, (faction_id, req.context['user']['id'])).fetchone()
         if not row:
-            raise falcon.HTTPNotFound("No faction found with id {} or unauthorized".format(faction_id))
+            raise falcon.HTTPNotFound(title="No faction found with id {} or unauthorized".format(faction_id))
         faction = FactionModel.from_db(row)
         if faction.external_file_name:
             with open(os.path.join(self._path, faction.external_file_name)) as f:

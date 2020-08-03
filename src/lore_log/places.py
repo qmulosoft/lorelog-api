@@ -20,9 +20,9 @@ class Places(Resource):
     def on_post(self, req: falcon.Request, res: falcon.Response):
         place = PlaceModel.from_req(req)
         if place.type not in valid_types:
-            raise falcon.HTTPBadRequest("Invalid place type. Must be domain, region, city or dungeon")
+            raise falcon.HTTPBadRequest(title="Invalid place type. Must be domain, region, city or dungeon")
         if place.type == "domain":
-            raise falcon.HTTPBadRequest("Cannot create multiple domains in a campaign")
+            raise falcon.HTTPBadRequest(title="Cannot create multiple domains in a campaign")
         self.create(place, res)
 
     def on_get(self, req: falcon.Request, res: falcon.Response):
@@ -51,7 +51,7 @@ class Place(Resource):
          WHERE id=? AND (creator_id=? OR is_public=1)
          """.format(",".join(f"[{field}]" for field in PlaceModel.fields)), (place_id, req.context['user']['id'])).fetchone()
         if not row:
-            raise falcon.HTTPNotFound("No place found with id {} or unauthorized".format(place_id))
+            raise falcon.HTTPNotFound(title="No place found with id {} or unauthorized".format(place_id))
         place = PlaceModel.from_db(row)
         if place.external_file_name:
             with open(os.path.join(self._path, place.external_file_name)) as f:

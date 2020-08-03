@@ -44,17 +44,17 @@ class ChronicleEntries(Resource):
     def on_post(self, req: falcon.Request, res: falcon.Response):
         entry = ChronicleEntryModel.from_req(req)
         if entry.relation_type not in valid_types:
-            raise falcon.HTTPBadRequest("invalid relation type: {}".format(entry.relation_type))
+            raise falcon.HTTPBadRequest(title="invalid relation type: {}".format(entry.relation_type))
         if not entry.relation_id:
-            raise falcon.HTTPBadRequest("missing required relation_id field")
+            raise falcon.HTTPBadRequest(title="missing required relation_id field")
         if not entry.rich_description:
-            raise falcon.HTTPBadRequest("chronicle entries require a description")
+            raise falcon.HTTPBadRequest(title="chronicle entries require a description")
         cursor = self._db.cursor()
         row = cursor.execute("""SELECT [id] FROM [{}] WHERE id=? AND creator_id=? AND campaign_id=?""".format(
             entry.relation_type), (entry.relation_id, req.context['user']['id'], req.context['user']['campaign'])
         ).fetchone()
         if not row:
-            raise falcon.HTTPNotFound("no such {} exists or unauthorized".format(entry.relation_type))
+            raise falcon.HTTPNotFound(title="no such {} exists or unauthorized".format(entry.relation_type))
         entry.id = generate_new_id()
         if not entry.tick:
             # Get the next tick in the sequence if they didn't populate tick explicitly
@@ -85,7 +85,7 @@ class ChronicleEntry(Resource):
                  """.format(",".join(f"[{field}]" for field in ChronicleEntryModel.fields)),
                         (entry_id, req.context['user']['id'])).fetchone()
         if not row:
-            raise falcon.HTTPNotFound("No entry found with id {} or unauthorized".format(entry_id))
+            raise falcon.HTTPNotFound(title="No entry found with id {} or unauthorized".format(entry_id))
         entry = ChronicleEntryModel.from_db(row)
         related_row = c.execute(f"""
         SELECT [{entry.relation_type}_id] FROM {entry.relation_type}_chronicle WHERE chronicle_entry_id=?

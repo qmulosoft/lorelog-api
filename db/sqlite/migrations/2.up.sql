@@ -1,0 +1,1 @@
+ALTER TABLE [character_faction] ADD COLUMN creator_id CHAR(32);

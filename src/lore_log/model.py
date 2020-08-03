@@ -110,3 +110,41 @@ class Model(ABC):
         columns = ",".join(columns)
         sql = f"UPDATE [{self.table_name}] SET {columns} WHERE [{self.fields[0]}]=?"
         self.execute_sql(c, sql, [self._kvs[each] for each in self.fields[1:] if self._kvs[each] is not None] + [self._kvs[self.fields[0]]])
+
+
+class Relation:
+    model: Model = None
+    this: Model = None
+    that: Model = None
+    to_one = False
+
+    def __init__(self):
+        self.map_table_name = self.this.table_name + "_" + self.that.table_name
+
+    def from_req(self, req: falcon.Request):
+        instance = self.model.from_req(req)
+        self.model = instance  # This is probably a bad idea... but for now idc since this is all pretty rough
+
+    def find_all(self, db: sqlite3.Connection, req: falcon.Request, id: str):
+        c = db.cursor()
+        this_id = self.this.table_name + "_id"
+        that_id = self.that.table_name + "_id"
+        user = req.context['user']['id']
+        qualified_fields = [self.model.table_name + "." + each for each in self.model.fields]
+        # In short, to see a relation table entry, the entry must be public, or the user must own BOTH sides
+        # TODO allow DMs to see everything
+        sql = f"""SELECT {','.join(qualified_fields)} FROM {self.map_table_name}
+        JOIN {self.this.table_name} ON {self.this.table_name}.id = {self.model.table_name}.{this_id}
+        JOIN {self.that.table_name} ON {self.that.table_name}.id = {self.model.table_name}.{that_id}
+        WHERE {self.model.table_name}.{this_id}=? AND ({self.model.table_name}.is_public = 1 
+        OR ({self.this.table_name}.creator_id = ? AND {self.that.table_name}.creator_id = ?))"""
+        rows = c.execute(sql, (id, user, user)).fetchall()
+        return rows
+
+    def add(self, db: sqlite3.Connection):
+        c = db.cursor()
+        columns = [f"[{field}]" for field in self.model.fields]
+        values = ",".join(["?"] * len(columns))
+        columns = ",".join(columns)
+        args = [self.model._kvs[each] for each in self.model.fields]
+        c.execute(f"INSERT INTO {self.map_table_name} ({columns}) VALUES ({values})", args)

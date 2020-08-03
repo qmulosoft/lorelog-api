@@ -63,7 +63,7 @@ class Character(Resource):
         WHERE id = ? AND (is_public = 1 OR creator_id = ?)
         """, (character_id, req.context['user']['id'])).fetchone()
         if not row:
-            raise falcon.HTTPNotFound("No character was found with id {} or unauthorized".format(character_id))
+            raise falcon.HTTPNotFound(title="No character was found with id {} or unauthorized".format(character_id))
         character = {
             'id': row[0],
             'name': row[1],
